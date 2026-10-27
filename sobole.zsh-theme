@@ -19,14 +19,13 @@
 # These settings changes how your terminal prompt looks like
 # ----------------------------------------------------------------------------
 
-PROMPT='$(__sobole::current_venv)$(__sobole::user_info)$(__sobole::current_dir) $(git_prompt_info)
+_return_status=''
+
+PROMPT='${_return_status}$(__sobole::current_venv)$(__sobole::user_info)$(__sobole::current_dir) $(git_prompt_info)
 $(__sobole::current_caret) '
 
 PROMPT2='. '
-
-_return_status="%(?..%{$fg[red]%}%? ⚠️%{$reset_color%})"
-
-RPROMPT='%{$(echotc UP 1)%} ${_return_status}%{$(echotc DO 1)%}'
+RPROMPT=''
 
 __sobole::current_caret () {
   # This function sets caret color and sign
@@ -231,6 +230,13 @@ __sobole::preexec () {
 
 __sobole::precmd () {
   local cmd_result="$?"
+
+  if (( cmd_result != 0 )); then
+    _return_status="%{$fg[red]%}[${cmd_result}] %{$reset_color%} "
+  else
+    _return_status=''
+  fi
+
   if [[ "$_SOBOLE_ADD_LINE_SEPARATOR" == 'true' ]] ||
      [[ "$cmd_result" -ne 0 ]]; then
     print
