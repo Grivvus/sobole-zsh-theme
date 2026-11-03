@@ -21,7 +21,7 @@
 
 _return_status=''
 
-PROMPT='${_return_status}$(__sobole::current_venv)$(__sobole::user_info)$(__sobole::current_dir) $(git_prompt_info)
+PROMPT='${_return_status}$(__sobole::current_venv)$(__sobole::user_info)$(__sobole::current_dir) $(git_prompt_info)$(__sobole::git_changes)
 $(__sobole::current_caret) '
 
 PROMPT2='. '
@@ -106,6 +106,42 @@ ZSH_THEME_GIT_PROMPT_DIRTY=" %{$fg[red]%}✗%{$reset_color%}"
 ZSH_THEME_GIT_PROMPT_CLEAN=" %{$fg[green]%}✔%{$reset_color%}"
 ZSH_THEME_GIT_PROMPT_UNMERGED="%{$fg[cyan]%}§%{$reset_color%}"
 ZSH_THEME_GIT_PROMPT_ADDED="%{$fg[green]%}✚%{$reset_color%}"
+
+# Markers used to prefix the numbers of pending git changes.
+# `add`    - files that are not yet added to git (require `git add`).
+# `commit` - files that are already added but not yet committed.
+ZSH_THEME_GIT_PROMPT_ADD_ICON='✚'
+ZSH_THEME_GIT_PROMPT_COMMIT_ICON='✱'
+
+__sobole::git_changes () {
+  # Shows the number of pending git changes in the top prompt line:
+  #   - green: files that are not yet added to git (unstaged modifications
+  #     and untracked files), these require `git add`;
+  #   - yellow: files that are already added but not yet committed.
+  # Prints nothing outside a repository or when the working tree is clean.
+  if [[ "$(command git rev-parse --is-inside-work-tree 2>/dev/null)" != 'true' ]]; then
+    return 0
+  fi
+
+  local git_status add_count commit_count
+  git_status=$(command git status --porcelain 2>/dev/null)
+  [[ -n "$git_status" ]] || return 0
+
+  # Untracked and unstaged files: the second column of `git status` is not
+  # a space (a modification exists in the working tree).
+  add_count=$(printf '%s\n' "$git_status" | awk 'substr($0, 2, 1) != " " { count++ } END { print count + 0 }')
+
+  # Staged files: the first column reports a change in the index.
+  commit_count=$(printf '%s\n' "$git_status" | grep -cE '^[MADRCT]')
+
+  if (( add_count > 0 )); then
+    echo -n " %{$fg[green]%}${ZSH_THEME_GIT_PROMPT_ADD_ICON}${add_count}%{$reset_color%}"
+  fi
+
+  if (( commit_count > 0 )); then
+    echo -n " %{$fg[yellow]%}${ZSH_THEME_GIT_PROMPT_COMMIT_ICON}${commit_count}%{$reset_color%}"
+  fi
+}
 
 # ----------------------------------------------------------------------------
 # `ls` colors

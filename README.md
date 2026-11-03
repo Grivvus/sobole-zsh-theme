@@ -94,7 +94,8 @@ Almost all of them are about `git` repository status. And one icon idicates that
 |    ✗   | Repository is dirty             |
 |    ✔   | Repository is clean             |
 |    §   | Repository has unmerged changes |
-|    ✚   | Repository has added files      |
+|    ✚   | Files that need `git add`       |
+|    ✱   | Staged files that need commit    |
 |    ⚠️   | Last command resulted in error  |
 
 
